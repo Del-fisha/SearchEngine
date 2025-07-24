@@ -3,7 +3,7 @@ package searchengine.services;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import searchengine.IndexingIsAlreadyRunningException;
+import searchengine.exception.IndexingIsAlreadyRunningException;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
 import searchengine.model.SiteEntity;

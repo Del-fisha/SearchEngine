@@ -1,0 +1,30 @@
+# example values
+
+indexing-settings:
+  sites:
+    - url: https://www.lenta.ru
+      name: Лента.ру
+    - url: https://www.skillbox.ru
+      name: Skillbox
+    - url: https://www.playback.ru
+      name: PlayBack.Ru
+
+server:
+  port: 8080
+spring:
+  datasource:
+    username: sa
+    password:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+
+logging:
+  pattern:
+    console: "%m%n"
