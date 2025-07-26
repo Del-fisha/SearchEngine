@@ -51,7 +51,9 @@ public class IndexingService {
             siteEntity.setUrl(site.getUrl());
             siteEntity.setStatusTime(LocalDateTime.now());
             siteEntity.setStatus(Status.INDEXING);
-            siteRepository.save(siteEntity);
+            SiteEntity savedEntity = siteRepository.save(siteEntity);
+            SiteCrawler crawler = new SiteCrawler(savedEntity, siteRepository, pageRepository);
+            crawler.crawlPage(savedEntity.getUrl());
         }
     }
 

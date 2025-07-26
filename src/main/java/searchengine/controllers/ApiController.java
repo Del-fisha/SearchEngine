@@ -1,7 +1,9 @@
 package searchengine.controllers;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +12,7 @@ import searchengine.dto.Response;
 import searchengine.dto.SuccessResponse;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.services.IndexingService;
+import searchengine.services.SiteCrawler;
 import searchengine.services.StatisticsService;
 
 @RestController
@@ -18,11 +21,13 @@ public class ApiController {
 
     private final StatisticsService statisticsService;
     private final IndexingService indexingService;
+    private final SiteCrawler siteCrawler;
 
     @Autowired
-    public ApiController(StatisticsService statisticsService, IndexingService indexingService) {
+    public ApiController(StatisticsService statisticsService, IndexingService indexingService, SiteCrawler siteCrawler) {
         this.statisticsService = statisticsService;
         this.indexingService = indexingService;
+        this.siteCrawler = siteCrawler;
     }
 
     @GetMapping("/statistics")
@@ -30,10 +35,9 @@ public class ApiController {
         return ResponseEntity.ok(statisticsService.getStatistics());
     }
 
-    @GetMapping("/startIndexing")
+    @GetMapping(value = "/startIndexing", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response> startIndexing() {
         indexingService.startIndexing();
-
         return new ResponseEntity<Response>(new SuccessResponse(), HttpStatus.OK);
     }
 }

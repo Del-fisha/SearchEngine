@@ -1,12 +1,14 @@
 package searchengine.model;
 
 import lombok.Data;
+import org.springframework.stereotype.Component;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Data
+@Component
 public class SiteEntity {
 
     @Id
@@ -24,7 +26,7 @@ public class SiteEntity {
     @Column(name = "url", nullable = false, unique = true)
     private String url;
 
-    @Column(name = "name", nullable = false, unique = true)
+    @Column(name = "name", nullable = false)
     private String name;
 
     @Column(name = "last_error", columnDefinition = "TEXT")
