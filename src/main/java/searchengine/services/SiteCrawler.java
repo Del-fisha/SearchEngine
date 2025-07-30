@@ -13,7 +13,9 @@ import searchengine.repository.PageRepository;
 import searchengine.repository.SiteRepository;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -25,8 +27,8 @@ public class SiteCrawler {
     private final PageRepository pageRepo;
 
 
-    static Map<PageEntity, Boolean> siteMap = new ConcurrentHashMap<>();
-    private Set<String> pageSet = new TreeSet<>();
+    static Map<String, Boolean> allPages = new ConcurrentHashMap<>();
+    private Set<String> pageSet = new HashSet<>();
 
     public SiteCrawler(final SiteEntity site, final SiteRepository siteRepo, final PageRepository pageRepo) {
         this.site = site;
@@ -52,12 +54,11 @@ public class SiteCrawler {
         saveCurrentPageEntity(pageEntity);
         Set<String> links = getLinks(pageEntity);
         pageSet.addAll(links);
-
     }
 
     private void saveCurrentPageEntity(PageEntity pageEntity) {
-        if (!siteMap.containsKey(pageEntity)) {
-            siteMap.put(pageEntity, true);
+        if (!allPages.containsKey(pageEntity.getPath())) {
+            allPages.put(pageEntity.getPath(), true);
             pageRepo.save(pageEntity);
         }
     }
@@ -66,6 +67,7 @@ public class SiteCrawler {
 
         PageEntity currentPage = new PageEntity();
         currentPage.setSite(site);
+
         currentPage.setPath(url);
         currentPage.setCode(statusCode);
         currentPage.setContent(doc.outerHtml());
@@ -82,7 +84,14 @@ public class SiteCrawler {
         for (Element linkElement : linkElements) {
             if (isValidLink(linkElement)) {
                 String href = linkElement.attr("abs:href");
+
+                if (href.endsWith("/") || href.endsWith("#")) {
+                    href = href.substring(0, href.length() - 1);
+                }
                 links.add(href);
+                if (!allPages.containsKey(href)) {
+                    allPages.put(href, true);
+                }
             }
         }
 
