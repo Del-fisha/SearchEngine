@@ -1,6 +1,5 @@
 package searchengine.controllers;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -12,7 +11,7 @@ import searchengine.dto.Response;
 import searchengine.dto.SuccessResponse;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.services.IndexingService;
-import searchengine.services.SiteCrawler;
+import searchengine.services.PageCrawler;
 import searchengine.services.StatisticsService;
 
 @RestController
@@ -21,13 +20,10 @@ public class ApiController {
 
     private final StatisticsService statisticsService;
     private final IndexingService indexingService;
-    private final SiteCrawler siteCrawler;
-
     @Autowired
-    public ApiController(StatisticsService statisticsService, IndexingService indexingService, SiteCrawler siteCrawler) {
+    public ApiController(StatisticsService statisticsService, IndexingService indexingService) {
         this.statisticsService = statisticsService;
         this.indexingService = indexingService;
-        this.siteCrawler = siteCrawler;
     }
 
     @GetMapping("/statistics")

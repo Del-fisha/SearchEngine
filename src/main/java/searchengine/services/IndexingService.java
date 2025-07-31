@@ -12,6 +12,7 @@ import searchengine.repository.PageRepository;
 import searchengine.repository.SiteRepository;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.ForkJoinPool;
 
 
 @Service
@@ -22,12 +23,14 @@ public class IndexingService {
     private final PageRepository pageRepository;
     @Getter
     private boolean isIndexingRunning;
+    private final ForkJoinPool forkJoinPool;
 
     @Autowired
     public IndexingService(SitesList sitesList, SiteRepository siteRepository, PageRepository pageRepository) {
         this.sitesList = sitesList;
         this.siteRepository = siteRepository;
         this.pageRepository = pageRepository;
+        this.forkJoinPool = new ForkJoinPool();
     }
 
     public synchronized void startIndexing() {
@@ -52,8 +55,9 @@ public class IndexingService {
             siteEntity.setStatusTime(LocalDateTime.now());
             siteEntity.setStatus(Status.INDEXING);
             SiteEntity savedEntity = siteRepository.save(siteEntity);
-            SiteCrawler crawler = new SiteCrawler(savedEntity, siteRepository, pageRepository);
-            crawler.crawlPage(savedEntity.getUrl());
+            PageCrawler crawler = new PageCrawler(savedEntity, siteRepository, pageRepository, savedEntity.getUrl());
+            forkJoinPool.execute(crawler);
+            System.out.println("********************************** THE END OF INDEXING *******************************");
         }
     }
 
