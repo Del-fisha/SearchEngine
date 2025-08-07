@@ -6,6 +6,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.dao.DataIntegrityViolationException;
 import searchengine.model.PageEntity;
 import searchengine.model.SiteEntity;
 import searchengine.repository.PageRepository;
@@ -43,6 +44,10 @@ public class PageCrawler extends RecursiveAction {
         try {
             response = Jsoup.connect(url).execute();
             statusCode = response.statusCode();
+            if (statusCode != 200) {
+                site.setLastError("404 Not Found: " + url);
+                return;
+            }
             doc = response.parse();
         } catch (IOException e) {
             site.setLastError(e.getMessage());
@@ -57,9 +62,15 @@ public class PageCrawler extends RecursiveAction {
     }
 
     private void saveCurrentPageEntity(PageEntity pageEntity) {
-        alreadySavedPages.put(pageEntity.getPath(), true);
-        pageRepo.save(pageEntity);
+        if (alreadySavedPages.putIfAbsent(pageEntity.getPath(), true) == null) {
+            try {
+                pageRepo.save(pageEntity);
+            } catch (DataIntegrityViolationException e) {
+                // Дубликат вставлен другим потоком. Можно логировать и игнорировать.
+            }
+        }
     }
+
 
     private PageEntity createPageEntity(String url, int statusCode, Document doc) {
 
@@ -104,26 +115,24 @@ public class PageCrawler extends RecursiveAction {
     private boolean isValidLink(Element link) {
         String href = link.attr("abs:href").trim();
         String siteUrl = site.getUrl().trim();
-
-        if (!href.endsWith("html")) {
+        String regex = "^[a-zA-Z0-9_.:/\\\\-]*$";
+        if (!href.matches(regex) || href.endsWith("webp") || href.endsWith("png") || href.endsWith("jpg")) {
             return false;
         }
-
         return href.startsWith(siteUrl);
     }
 
     @Override
     protected void compute() {
-        System.out.println("Нахожусь в " + currentUrl);
-        if (alreadySavedPages.containsKey(currentUrl)) {
-            System.out.println("--------------- Проверка на уникальность не пройдена --------------------------");
+        if (alreadySavedPages.containsKey(currentUrl) || pageRepo.findByPath(currentUrl) != null) {
             return; // ToDo Подумать где оставить логику проверки на наличие в alreadySavedPages
-                    // (Эта логика ещё используется в saveCurrentPageEntity)
+            // (Эта логика ещё используется в saveCurrentPageEntity)
         }
-        System.out.println("************* Проверка на уникальность пройдена **************");
         crawlPage(currentUrl);
         alreadySavedPages.put(currentUrl, true);
+
         List<PageCrawler> pageCrawlers = new ArrayList<>();
+
         for (String page : currentPageSet) {
             PageCrawler newCrawler = new PageCrawler(site, siteRepo, pageRepo, page);
             pageCrawlers.add(newCrawler);
